@@ -9,24 +9,27 @@ HOST=${CODEX_RETRY_HOST:-127.0.0.1}
 # important path for ChatGPT-account sessions: the wrapper retries the CLI
 # process and never routes the account token through api.openai.com.
 if [[ "${CODEX_NO_STOP_MODE:-account}" == "account" ]]; then
-  MAX_ATTEMPTS=${CODEX_RETRY_MAX_ATTEMPTS:-5}
-  if ! [[ "$MAX_ATTEMPTS" == <-> ]] || (( MAX_ATTEMPTS < 1 || MAX_ATTEMPTS > 10 )); then
-    print -u2 "CODEX_RETRY_MAX_ATTEMPTS must be an integer from 1 to 10"
+  MAX_ATTEMPTS=${CODEX_RETRY_MAX_ATTEMPTS:-0}
+  if ! [[ "$MAX_ATTEMPTS" == <-> ]] || (( MAX_ATTEMPTS < 0 || MAX_ATTEMPTS > 1000 )); then
+    print -u2 "CODEX_RETRY_MAX_ATTEMPTS must be an integer from 0 to 1000 (0 means unlimited)"
     exit 2
   fi
-  for attempt in {1..10}; do
+  attempt=1
+  while true; do
     set +e
     output=$(command codex "$@" 2>&1)
     rc_status=$?
     set -e
     print -r -- "$output"
     (( rc_status == 0 )) && exit 0
-    (( attempt >= MAX_ATTEMPTS )) && exit "$rc_status"
+    (( MAX_ATTEMPTS > 0 && attempt >= MAX_ATTEMPTS )) && exit "$rc_status"
     if ! print -r -- "$output" | grep -Eiq 'server[_ -]?overloaded|temporarily unavailable|rate limit|capacity|429|5[0-9][0-9]'; then
       exit "$rc_status"
     fi
-    delay=$(( 2 ** (attempt - 1) )); (( delay > 60 )) && delay=60
+    backoff=$(( attempt - 1 )); (( backoff > 6 )) && backoff=6
+    delay=$(( 2 ** backoff )); (( delay > 60 )) && delay=60
     sleep "$delay"
+    (( attempt++ ))
   done
   exit 1
 fi

@@ -32,7 +32,10 @@ try {
 }
 const PORT = Number(process.env.CODEX_RETRY_PORT || 8788);
 const HOST = process.env.CODEX_RETRY_HOST || '127.0.0.1';
-const MAX_RETRIES = Number(process.env.CODEX_RETRY_MAX || 100);
+const RETRY_MAX_RAW = process.env.CODEX_RETRY_MAX || 'infinite';
+const MAX_RETRIES = /^(infinite|unlimited|0)$/i.test(RETRY_MAX_RAW)
+  ? Infinity
+  : Math.max(1, Number(RETRY_MAX_RAW) || 100);
 const BASE_DELAY_MS = Number(process.env.CODEX_RETRY_BASE_MS || 2000);
 const MAX_DELAY_MS = Number(process.env.CODEX_RETRY_MAX_DELAY_MS || 20000);
 const MAX_SERVER_DELAY_MS = Number(process.env.CODEX_RETRY_MAX_SERVER_DELAY_MS || 60000);
@@ -489,7 +492,8 @@ async function handle(req, res, body) {  if (req.url === '/__health') {
     sendJson(res, 200, {
       ok: true,
       upstream: UPSTREAM.href,
-      max_retries: MAX_RETRIES,
+      max_retries: Number.isFinite(MAX_RETRIES) ? MAX_RETRIES : null,
+      unlimited_retries: !Number.isFinite(MAX_RETRIES),
       pid: process.pid,
     });
     return;
@@ -518,7 +522,7 @@ async function handle(req, res, body) {  if (req.url === '/__health') {
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
     if (FAKE_CAPACITY_FIRST_N > 0 && attempt <= FAKE_CAPACITY_FIRST_N) {
-      log(`${req.method} ${req.url} attempt ${attempt}/${MAX_RETRIES}: [fake] capacity error`);
+      log(`${req.method} ${req.url} attempt ${attempt}/${Number.isFinite(MAX_RETRIES) ? MAX_RETRIES : '∞'}: [fake] capacity error`);
       lastReason = 'fake capacity error';
       recordRetry(lastReason);
       await sleep(backoffMs(attempt, null));
@@ -526,7 +530,7 @@ async function handle(req, res, body) {  if (req.url === '/__health') {
     }
 
     if (FAKE_STREAM_FAIL_FIRST_N > 0 && attempt <= FAKE_STREAM_FAIL_FIRST_N) {
-      log(`${req.method} ${req.url} attempt ${attempt}/${MAX_RETRIES}: [fake] stream failure`);
+      log(`${req.method} ${req.url} attempt ${attempt}/${Number.isFinite(MAX_RETRIES) ? MAX_RETRIES : '∞'}: [fake] stream failure`);
       const outcome = await fakeStreamAttempt(res);
       if (outcome.action === 'done') return;
       lastReason = outcome.reason || 'fake stream failure';
@@ -540,7 +544,7 @@ async function handle(req, res, body) {  if (req.url === '/__health') {
       outcome = await attemptUpstream(req, body, res, attempt);
     } catch (err) {
       lastReason = 'transport error: ' + err.message;
-      log(`${req.method} ${req.url} attempt ${attempt}/${MAX_RETRIES}: ${lastReason}`);
+      log(`${req.method} ${req.url} attempt ${attempt}/${Number.isFinite(MAX_RETRIES) ? MAX_RETRIES : '∞'}: ${lastReason}`);
     }
 
     if (outcome && outcome.action === 'done') {
@@ -598,7 +602,7 @@ server.on('error', (err) => {
 
 server.listen(PORT, HOST, () => {
   log(`codex-no-stop proxy listening on http://${HOST}:${PORT}/v1 -> ${UPSTREAM.href}`);
-  log(`max retries per request: ${MAX_RETRIES}; log: ${LOG_FILE}`);
+  log(`max retries per request: ${Number.isFinite(MAX_RETRIES) ? MAX_RETRIES : 'unlimited'}; log: ${LOG_FILE}`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

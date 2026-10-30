@@ -1,6 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 ROOT=${CODEX_NO_STOP_ROOT:-/Volumes/SSD/codex-no-stop}
+export CODEX_RETRY_MAX=${CODEX_RETRY_MAX:-infinite}
 CONFIG=${CODEX_HOME:-$HOME/.codex}/config.toml
 STAMP=$(date +%Y%m%d-%H%M%S)
 

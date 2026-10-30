@@ -4,6 +4,7 @@ ROOT=${CODEX_NO_STOP_ROOT:-${0:A:h}}
 CODEX_RETRY_UPSTREAM=${CODEX_RETRY_UPSTREAM:-https://api.openai.com/v1}
 PORT=${CODEX_RETRY_PORT:-8788}
 HOST=${CODEX_RETRY_HOST:-127.0.0.1}
+export CODEX_RETRY_MAX=${CODEX_RETRY_MAX:-infinite}
 
 # The default mode keeps the normal Codex provider/account. This is the
 # important path for ChatGPT-account sessions: the wrapper retries the CLI

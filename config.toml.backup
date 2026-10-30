@@ -1,0 +1,300 @@
+disable_response_storage = true
+model_reasoning_effort = "low"
+service_tier = "default"
+model = "gpt-6.1-sol"
+notify = ["/Volumes/SSD/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+env_vars = ["BROWSER_USE_ACCESS_EXECUTOR_ID", "BROWSER_USE_ACCESS_PIPE_PATH", "BROWSER_USE_ACCESS_VERIFYING_IDENTITY"]
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/asd/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+CODEX_HOME = "/Users/asd/.codex"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab,mcpapps"
+BROWSER_USE_TINYSKY_ENABLED = "1"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.1023.50603"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/asd/.codex/plugins/cache/openai-bundled/browser/26.1023.50603/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+SKY_CUA_SERVICE_PATH = "/Users/asd/.codex/computer-use/Codex Computer Use.app"
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+
+[mcp_servers.pencil]
+command = "/Users/asd/.pencil/mcp/visual_studio_code/out/mcp-server-darwin-arm64"
+args = [ "--app", "visual_studio_code" ]
+
+[marketplaces.openai-bundled]
+source_type = "local"
+source = "/Users/asd/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+source_type = "local"
+source = "/Users/asd/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."google-drive@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."universal-presentation-agent@personal"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[projects."/Users/asd/IdeaProjects/byte-orca"]
+trust_level = "trusted"
+
+[projects."/Users/asd/IdeaProjects/local-prototypes"]
+trust_level = "trusted"
+
+[projects."/Users/asd/IdeaProjects/project-github"]
+trust_level = "trusted"
+
+[projects."/Users/asd/.qclaw/workspace"]
+trust_level = "trusted"
+
+[projects."/Users/asd/.qclaw"]
+trust_level = "trusted"
+
+[projects."/Users/asd/.qclaw/workspace-agent-e9a9148b"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/files-mentioned-by-the-user-ai"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/ai-ai-ai-ai-ai-ai"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/ai-ai-ai-ai-ai-ai-2"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/https-matrix-tencent-com-ai-detect"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/files-mentioned-by-the-user-tencent"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/files-mentioned-by-the-user-jc"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-29/aigc-burstiness-ai-perplexity-p-p"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-30/jc-skill"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-04-30/nx-users-asd-codex-skills-nx"]
+trust_level = "trusted"
+
+[projects."/Users/asd/IdeaProjects"]
+trust_level = "trusted"
+
+[projects."/Users/asd/github/kiro-register"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-03/users-asd-library-containers-com-tencent"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-03/files-mentioned-by-the-user-1"]
+trust_level = "trusted"
+
+[projects."/Users/asd/github/my-captcha-project"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-04/6-2024-9-2025-7-2024"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-04/files-mentioned-by-the-user-jc"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-04/jc-users-asd-codex-skills-jc"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-04/jc-users-asd-codex-skills-jc-2"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-04/jc-users-asd-codex-skills-jc-3"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/jc-users-asd-codex-skills-jc"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/6-2024-9-2025-7-aba"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/jc-users-asd-codex-skills-jc-2"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/jc-users-asd-codex-skills-jc-3"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/aigc-6-2024-9-2025-7"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/files-mentioned-by-the-user-jc"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-05/jc-users-asd-codex-skills-jc-4"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-12/codex-skill-agent"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-12/files-mentioned-by-the-user-docx"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-17/new-chat"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-21/ppt"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-22/ppt-ai-ppt"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/project/github"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-06-30/bang"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/project/github/cloakbrowser-manager"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-07-03/an-z"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-07-04/ni"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-07-16/da-k"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-07-20/shi"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-08-05/wei"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-08-13/realtime-voice-chat"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-08-31/chatgpt"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-07/wo"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/安卓/源码/源码"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-23/ge"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-28/new-chat"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-30/async-steganography-engine-meta-jailbreak-factory"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-30/meta-safety-validation-agent-skill-v4"]
+trust_level = "trusted"
+
+[projects."/Users/asd/Documents/Codex/2026-09-30/ze"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/grok/cockpit-tools"]
+trust_level = "trusted"
+
+[projects."/Users/asd/IdeaProjects/byte-orca-admin"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/浏览器驱动"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/驱动"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/IdeaProjects"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/IdeaProjects/byte-orca-admin"]
+trust_level = "trusted"
+
+[projects."/Volumes/SSD/IdeaProjects/byte-orca"]
+trust_level = "trusted"
+
+[desktop]
+localeOverride = "zh-CN"
+selected-avatar-id = "pet_6adb031ceab481919b3bdeecde742783"
+followUpQueueMode = "queue"
+ambient-suggestions-enabled = true
+preventSleepWhileRunning = true
+reviewDelivery = "detached"
+dock-icon-preference = "app-default"
+conversationDetailMode = "STEPS_COMMANDS"
+avatar-overlay-pet-visible = true
+enabled-reasoning-efforts = ["low", "medium", "high", "xhigh", "persistent", "max"]
+projectlessWorkspaceRoot = "/Volumes/SSD/Codex"
+show-context-window-usage = true
+hotkey-window-projectless-default-enabled = true
+
+[desktop.open-in-target-preferences]
+global = "pycharm"
+
+[desktop.open-in-target-preferences.perPath]
+"/Users/asd/.codex/worktrees/e67f/byte-orca-admin" = "webstorm"
+"/Users/asd/IdeaProjects/byte-orca" = "intellij"
+"/Users/asd/.codex/worktrees/1f76/byte-orca" = "intellij"
+"/Volumes/SSD/project/github/cloakbrowser-manager" = "pycharm"
+
+[features]
+memories = true
+multi_agent = true
+js_repl = false
+
+[memories]
+generate_memories = true
+use_memories = true
+
+[shell_environment_policy.set]
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "9230e2bd8b24b7ac7a0ba6774c64bf0d78ecdabbdd91d0ed627b02a587bae2df"
+
+[apps.connector_openai_codex_document_control]
+enabled = false
+
+[tui]
+screen_reader_detection_done = true

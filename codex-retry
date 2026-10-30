@@ -1,0 +1,45 @@
+#!/bin/zsh
+set -euo pipefail
+ROOT=${CODEX_NO_STOP_ROOT:-${0:A:h}}
+CODEX_RETRY_UPSTREAM=${CODEX_RETRY_UPSTREAM:-https://api.openai.com/v1}
+PORT=${CODEX_RETRY_PORT:-8788}
+HOST=${CODEX_RETRY_HOST:-127.0.0.1}
+
+# Reuse the existing Codex desktop/CLI ChatGPT login when no API key is set.
+# The token is kept in memory and passed only to this child process.
+if [[ -z "${OPENAI_API_KEY:-}" && -z "${CODEX_ACCESS_TOKEN:-}" ]]; then
+  AUTH_FILE=${CODEX_HOME:-$HOME/.codex}/auth.json
+  if [[ -f "$AUTH_FILE" ]]; then
+    CODEX_ACCESS_TOKEN=$(python3 - "$AUTH_FILE" <<'PY'
+import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+    print(data.get("tokens", {}).get("access_token", ""), end="")
+except Exception:
+    pass
+PY
+)
+  fi
+fi
+if [[ -z "${OPENAI_API_KEY:-}" && -z "${CODEX_ACCESS_TOKEN:-}" ]]; then
+  print -u2 "No OpenAI API key or ChatGPT login token found. Run codex login first."
+  exit 1
+fi
+if ! curl -fsS "http://${HOST}:${PORT}/__health" >/dev/null 2>&1; then
+  CODEX_RETRY_UPSTREAM="$CODEX_RETRY_UPSTREAM" CODEX_RETRY_PORT="$PORT" CODEX_RETRY_HOST="$HOST" \
+    nohup node "$ROOT/proxy/server.js" >>"$ROOT/proxy/proxy.log" 2>&1 &
+  for i in {1..30}; do
+    curl -fsS "http://${HOST}:${PORT}/__health" >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+fi
+# Use an explicit temporary provider override; the normal Codex config is untouched.
+AUTH_ENV=CODEX_ACCESS_TOKEN
+if [[ -n "${OPENAI_API_KEY:-}" ]]; then AUTH_ENV=OPENAI_API_KEY; fi
+export CODEX_ACCESS_TOKEN OPENAI_API_KEY
+exec codex -c "model_provider=codex_no_stop" \
+  -c "model_providers.codex_no_stop.name=codex-no-stop" \
+  -c "model_providers.codex_no_stop.base_url=http://${HOST}:${PORT}/v1" \
+  -c "model_providers.codex_no_stop.env_key=${AUTH_ENV}" \
+  -c "model_providers.codex_no_stop.requires_openai_auth=false" \
+  -c "model_providers.codex_no_stop.wire_api=responses" "$@"

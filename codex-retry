@@ -5,6 +5,33 @@ CODEX_RETRY_UPSTREAM=${CODEX_RETRY_UPSTREAM:-https://api.openai.com/v1}
 PORT=${CODEX_RETRY_PORT:-8788}
 HOST=${CODEX_RETRY_HOST:-127.0.0.1}
 
+# The default mode keeps the normal Codex provider/account. This is the
+# important path for ChatGPT-account sessions: the wrapper retries the CLI
+# process and never routes the account token through api.openai.com.
+if [[ "${CODEX_NO_STOP_MODE:-account}" == "account" ]]; then
+  MAX_ATTEMPTS=${CODEX_RETRY_MAX_ATTEMPTS:-5}
+  if ! [[ "$MAX_ATTEMPTS" == <-> ]] || (( MAX_ATTEMPTS < 1 || MAX_ATTEMPTS > 10 )); then
+    print -u2 "CODEX_RETRY_MAX_ATTEMPTS must be an integer from 1 to 10"
+    exit 2
+  fi
+  for attempt in {1..10}; do
+    set +e
+    output=$(command codex "$@" 2>&1)
+    rc_status=$?
+    set -e
+    print -r -- "$output"
+    (( rc_status == 0 )) && exit 0
+    (( attempt >= MAX_ATTEMPTS )) && exit "$rc_status"
+    if ! print -r -- "$output" | grep -Eiq 'server[_ -]?overloaded|temporarily unavailable|rate limit|capacity|429|5[0-9][0-9]'; then
+      exit "$rc_status"
+    fi
+    delay=$(( 2 ** (attempt - 1) )); (( delay > 60 )) && delay=60
+    sleep "$delay"
+  done
+  exit 1
+fi
+
+# Legacy proxy mode is opt-in and intended for API-key providers only.
 # Reuse the existing Codex desktop/CLI ChatGPT login when no API key is set.
 # The token is kept in memory and passed only to this child process.
 if [[ -z "${OPENAI_API_KEY:-}" && -z "${CODEX_ACCESS_TOKEN:-}" ]]; then

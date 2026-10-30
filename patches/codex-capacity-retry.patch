@@ -1,0 +1,221 @@
+diff --git a/patches/apply-codex-capacity-retry.sh b/patches/apply-codex-capacity-retry.sh
+new file mode 100644
+index 0000000..22b524e
+--- /dev/null
++++ b/patches/apply-codex-capacity-retry.sh
+@@ -0,0 +1,9 @@
++#!/bin/sh
++set -eu
++
++repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
++patch_file="$repo_dir/patches/codex-capacity-retry.patch"
++
++git -C "$repo_dir" apply --check "$patch_file"
++git -C "$repo_dir" apply "$patch_file"
++printf '%s\n' "Codex capacity retry patch applied. Rebuild the cockpit-cliproxy sidecar before launching Cockpit."
+diff --git a/patches/codex-capacity-retry.json.example b/patches/codex-capacity-retry.json.example
+new file mode 100644
+index 0000000..1a10277
+--- /dev/null
++++ b/patches/codex-capacity-retry.json.example
+@@ -0,0 +1,11 @@
++{
++  "enabled": true,
++  "max_attempts": 5,
++  "patterns": [
++    "(?i)selected\\s+model\\s+is\\s+(?:currently\\s+)?(?:unavailable\\s+due\\s+to\\s+)?capacity",
++    "(?i)model[\\s_-]+(?:is[\\s_-]+)?(?:at[\\s_-]+)?capacity",
++    "(?i)remote\\s+compact\\s+task.*capacity",
++    "(?i)server[_ -]is[_ -]overloaded",
++    "(?i)rate[_ -]limit[_ -]exceeded"
++  ]
++}
+diff --git a/sidecars/cockpit-cliproxy/codex-capacity-retry.json b/sidecars/cockpit-cliproxy/codex-capacity-retry.json
+new file mode 100644
+index 0000000..1a10277
+--- /dev/null
++++ b/sidecars/cockpit-cliproxy/codex-capacity-retry.json
+@@ -0,0 +1,11 @@
++{
++  "enabled": true,
++  "max_attempts": 5,
++  "patterns": [
++    "(?i)selected\\s+model\\s+is\\s+(?:currently\\s+)?(?:unavailable\\s+due\\s+to\\s+)?capacity",
++    "(?i)model[\\s_-]+(?:is[\\s_-]+)?(?:at[\\s_-]+)?capacity",
++    "(?i)remote\\s+compact\\s+task.*capacity",
++    "(?i)server[_ -]is[_ -]overloaded",
++    "(?i)rate[_ -]limit[_ -]exceeded"
++  ]
++}
+diff --git a/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_retry_test.go b/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_retry_test.go
+index 3711850..697b875 100644
+--- a/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_retry_test.go
++++ b/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_retry_test.go
+@@ -74,6 +74,18 @@ func TestNewCodexStatusErrTreatsCapacityAsRetryableRateLimit(t *testing.T) {
+ 	}
+ }
+ 
++func TestCodexModelCapacityClassifierAcceptsRemoteCompactWrappers(t *testing.T) {
++	for _, body := range []string{
++		`{"detail":"Error running remote compact task: Selected model is at capacity. Please try a different model."}`,
++		`{"response":{"error":{"message":"The selected model is currently unavailable due to capacity"}}}`,
++		`Error running remote compact task: Selected model is at capacity. Please try a different model.`,
++	} {
++		if !isCodexModelCapacityError([]byte(body)) {
++			t.Fatalf("capacity wrapper was not classified: %s", body)
++		}
++	}
++}
++
+ func TestNewCodexStatusErrTreatsUsageLimitAsRetryableRateLimit(t *testing.T) {
+ 	body := []byte(`{"error":{"type":"usage_limit_reached","message":"You've hit your usage limit.","resets_in_seconds":120}}`)
+ 
+diff --git a/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_terminal.go b/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_terminal.go
+index e2ed67e..5708216 100644
+--- a/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_terminal.go
++++ b/sidecars/cockpit-cliproxy/third_party/CLIProxyAPI/internal/runtime/executor/codex_executor_terminal.go
+@@ -3,13 +3,18 @@ package executor
+ import (
+ 	"bytes"
+ 	"context"
++	"encoding/json"
+ 	"errors"
+ 	"io"
+ 	"net"
+ 	"net/http"
++	"os"
++	"path/filepath"
++	"regexp"
+ 	"sort"
+ 	"strconv"
+ 	"strings"
++	"sync"
+ 	"time"
+ 
+ 	"github.com/router-for-me/CLIProxyAPI/v7/internal/runtime/executor/helps"
+@@ -19,6 +24,57 @@ import (
+ 
+ const codexIncompleteStreamMessage = "stream closed before response.completed"
+ 
++var codexCapacityPatterns = []*regexp.Regexp{
++	regexp.MustCompile(`(?i)selected\s+model\s+is\s+(?:currently\s+)?(?:unavailable\s+due\s+to\s+)?capacity`),
++	regexp.MustCompile(`(?i)model[\s_-]+(?:is[\s_-]+)?(?:at[\s_-]+)?capacity`),
++	regexp.MustCompile(`(?i)remote\s+compact\s+task.*capacity`),
++	regexp.MustCompile(`(?i)server[_ -]is[_ -]overloaded`),
++	regexp.MustCompile(`(?i)rate[_ -]limit[_ -]exceeded`),
++}
++
++var codexCapacityConfigOnce sync.Once
++var codexCapacityRetryEnabled = true
++
++func loadCodexCapacityRetryConfig() {
++	codexCapacityConfigOnce.Do(func() {
++		path := strings.TrimSpace(os.Getenv("COCKPIT_CAPACITY_RETRY_CONFIG"))
++		if path == "" {
++			if executable, err := os.Executable(); err == nil {
++				path = filepath.Join(filepath.Dir(executable), "codex-capacity-retry.json")
++				if _, err := os.Stat(path); err != nil {
++					path = filepath.Join(filepath.Dir(executable), "..", "codex-capacity-retry.json")
++				}
++			}
++		}
++		if path == "" {
++			return
++		}
++		data, err := os.ReadFile(path)
++		if err != nil {
++			return
++		}
++		var config struct {
++			Enabled  *bool    `json:"enabled"`
++			Patterns []string `json:"patterns"`
++		}
++		if json.Unmarshal(data, &config) != nil {
++			return
++		}
++		if config.Enabled != nil {
++			codexCapacityRetryEnabled = *config.Enabled
++		}
++		compiled := make([]*regexp.Regexp, 0, len(config.Patterns))
++		for _, pattern := range config.Patterns {
++			if re, err := regexp.Compile(pattern); err == nil {
++				compiled = append(compiled, re)
++			}
++		}
++		if len(compiled) > 0 {
++			codexCapacityPatterns = compiled
++		}
++	})
++}
++
+ type codexIncompleteStreamError struct {
+ 	statusErr
+ 	cause error
+@@ -406,27 +462,51 @@ func codexStatusErrorClassification(statusCode int, body []byte) (code string, e
+ }
+ 
+ func isCodexModelCapacityError(errorBody []byte) bool {
+-	if len(errorBody) == 0 {
++	loadCodexCapacityRetryConfig()
++	if !codexCapacityRetryEnabled {
+ 		return false
+ 	}
+-	candidates := []string{
+-		gjson.GetBytes(errorBody, "error.message").String(),
+-		gjson.GetBytes(errorBody, "message").String(),
+-		string(errorBody),
++	if len(errorBody) == 0 {
++		return false
+ 	}
+-	for _, candidate := range candidates {
+-		lower := strings.ToLower(strings.TrimSpace(candidate))
+-		if lower == "" {
+-			continue
+-		}
+-		if strings.Contains(lower, "model is at capacity") ||
+-			strings.Contains(lower, "model_at_capacity") ||
+-			strings.Contains(lower, "model_is_at_capacity") ||
+-			(strings.Contains(lower, "model") && strings.Contains(lower, "at capacity")) {
+-			return true
++	// Compact-task failures have appeared both as a normal error envelope and as
++	// a wrapper message (for example, "Error running remote compact task: ...").
++	// Walk every JSON string so a provider moving the message under `detail`,
++	// `response.error`, or another envelope does not disable failover.
++	var containsCapacity func(any) bool
++	containsCapacity = func(value any) bool {
++		switch v := value.(type) {
++		case string:
++			lower := strings.ToLower(strings.TrimSpace(v))
++			compact := strings.Join(strings.FieldsFunc(lower, func(r rune) bool {
++				return !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9')
++			}), " ")
++			for _, pattern := range codexCapacityPatterns {
++				if pattern.MatchString(lower) {
++					return true
++				}
++			}
++			return strings.Contains(compact, "model") && strings.Contains(compact, "capacity")
++		case []any:
++			for _, item := range v {
++				if containsCapacity(item) {
++					return true
++				}
++			}
++		case map[string]any:
++			for _, item := range v {
++				if containsCapacity(item) {
++					return true
++				}
++			}
+ 		}
++		return false
+ 	}
+-	return false
++	var payload any
++	if json.Unmarshal(errorBody, &payload) == nil && containsCapacity(payload) {
++		return true
++	}
++	return containsCapacity(string(errorBody))
+ }
+ 
+ // isCodexUsageLimitError reports whether the error body represents a Codex

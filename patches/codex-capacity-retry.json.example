@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "max_attempts": 5,
+  "patterns": [
+    "(?i)selected\\s+model\\s+is\\s+(?:currently\\s+)?(?:unavailable\\s+due\\s+to\\s+)?capacity",
+    "(?i)model[\\s_-]+(?:is[\\s_-]+)?(?:at[\\s_-]+)?capacity",
+    "(?i)remote\\s+compact\\s+task.*capacity",
+    "(?i)server[_ -]is[_ -]overloaded",
+    "(?i)rate[_ -]limit[_ -]exceeded"
+  ]
+}
